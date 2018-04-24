@@ -32,7 +32,8 @@ def generator_simplified_api(inputs, is_train=True, reuse=False):
     c_dim = FLAGS.c_dim # 在main.py已经定义了,生成图像颜色数,3,全局参数,可以利用FLAGS取出我们想要的参数结果
     batch_size = FLAGS.batch_size  # 批处理每批的数目64
     w_init = tf.random_normal_initializer(stddev=0.02)  # 各个卷积层参数初始化
-    gamma_init = tf.random_normal_initializer(1., 0.02)  # BN算法第四步进行重构,yi = gamma * xi + beta_init, gamma和beta是神经网络需要学习的参数
+    gamma_init = tf.random_normal_initializer(1., 0.02)  # BN算法第四步进行重构,yi = gamma * xi + beta_init,
+    # gamma和beta是神经网络需要学习的参数
     with tf.variable_scope("generator", reuse=reuse):
         tl.layers.set_name_reuse(reuse)  # 这个不太重要,已过时函数
 
@@ -44,26 +45,31 @@ def generator_simplified_api(inputs, is_train=True, reuse=False):
                 gamma_init=gamma_init, name='g/h0/batch_norm')  # 在送入去卷积层之前我们使用BN网络,为的是减少梯度弥散的问题
 
         net_h1 = DeConv2d(net_h0, gf_dim*4, (5, 5), out_size=(s8, s8), strides=(2, 2),
-                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h1/decon2d')  # 这是第一步进行去卷积之后结果,输出结果,[-1, 8,8,256],暂时先不使用任何act,在BN中我们在使用relu
+                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h1/decon2d')
+        # 这是第一步进行去卷积之后结果,输出结果,[-1, 8,8,256],暂时先不使用任何act,在BN中我们在使用relu
         net_h1 = BatchNormLayer(net_h1, act=tf.nn.relu, is_train=is_train,
                 gamma_init=gamma_init, name='g/h1/batch_norm')
 
         net_h2 = DeConv2d(net_h1, gf_dim*2, (5, 5), out_size=(s4, s4), strides=(2, 2),
-                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h2/decon2d')  # 第二次进行去卷积,输出[-1, 16,16, 128]
-        net_h2 = BatchNormLayer(net_h2, act=tf.nn.relu, is_train=is_train,
-                gamma_init=gamma_init, name='g/h2/batch_norm')  # 作者在paper中强调了在生成网络中我们使用relu,而且在输出层使用tanh,而不是relu
+                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h2/decon2d')
+        net_h2 = BatchNormLayer(net_h2, act=tf.nn.relu, is_train=is_train,  # 第二次进行去卷积,输出[-1, 16,16, 128]
+                gamma_init=gamma_init, name='g/h2/batch_norm')
+        # 作者在paper中强调了在生成网络中我们使用relu,而且在输出层使用tanh,而不是relu
 
         net_h3 = DeConv2d(net_h2, gf_dim, (5, 5), out_size=(s2, s2), strides=(2, 2),
-                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h3/decon2d')  # 第三次进行去卷积,输出结果是[-1, 32, 32, 64]
+                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h3/decon2d')
+        # 第三次进行去卷积,输出结果是[-1, 32, 32, 64]
         net_h3 = BatchNormLayer(net_h3, act=tf.nn.relu, is_train=is_train,
                 gamma_init=gamma_init, name='g/h3/batch_norm')
 
         net_h4 = DeConv2d(net_h3, c_dim, (5, 5), out_size=(image_size, image_size), strides=(2, 2),
-                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h4/decon2d')  # 第四次进行去卷积,c_dim是3,输出结果是[-1, 64, 64, 3]
+                padding='SAME', batch_size=batch_size, act=None, W_init=w_init, name='g/h4/decon2d')
+        # 第四次进行去卷积,c_dim是3,输出结果是[-1, 64, 64, 3]
         logits = net_h4.outputs  # 这里的logits是没有整个网络没有进行tanh激活函数输出的结果
         net_h4.outputs = tf.nn.tanh(net_h4.outputs)  # 然后对整个输出网络施加一个tanh的激活函数,然后将结果进行返回
     return net_h4, logits  # net_h4输出的应该是整个网络的信息,而logits输出的是最后生成的图像信息,但是为什么在施加激活函数之前就要输出了?
-# 从main.py调用情况我们可以看出, 在z运行G网络之后输出的图像信息,然后我们传入的参数是net_h4.outputs这是经过了tanh函数的,而不是传入logits那么这里的logits仅仅是中间变量吗?
+# 从main.py调用情况我们可以看出, 在z运行G网络之后输出的图像信息,然后我们传入的参数是net_h4.outputs这是经过了tanh函数的,
+# 而不是传入logits那么这里的logits仅仅是中间变量吗?
 
 
 def discriminator_simplified_api(inputs, is_train=True, reuse=False):
@@ -76,11 +82,14 @@ def discriminator_simplified_api(inputs, is_train=True, reuse=False):
         tl.layers.set_name_reuse(reuse)  # 这个201806就会废弃这个函数
 
         net_in = InputLayer(inputs, name='d/in')
-        net_h0 = Conv2d(net_in, df_dim, (5, 5), (2, 2), act=lambda x: tl.act.lrelu(x, 0.2),  # 作者在paper中也提道理leaky_rule的参数是0.2
-                padding='SAME', W_init=w_init, name='d/h0/conv2d')  # 因为leak_relu和relu还有一点不一样,他是有参数alpha,我们在调用Conv2d相当于是高阶函数,需要使用lanmda不等式,将act变成一个匿名函数
+        net_h0 = Conv2d(net_in, df_dim, (5, 5), (2, 2), act=lambda x: tl.act.lrelu(x, 0.2),
+                        # 作者在paper中也提道理leaky_rule的参数是0.2
+                padding='SAME', W_init=w_init, name='d/h0/conv2d')
+        # 因为leak_relu和relu还有一点不一样,他是有参数alpha,我们在调用Conv2d相当于是高阶函数,需要使用lanmda不等式,将act变成一个匿名函数
 
         net_h1 = Conv2d(net_h0, df_dim*2, (5, 5), (2, 2), act=None,
-                padding='SAME', W_init=w_init, name='d/h1/conv2d') # 这里还需要注意一点,我们使用stride=(2,2),而不是(1,1)这样我们经过一个conv层之后图像的大小就会减小一半,而且这里并没有使用maxpooling层,减少了参数的个数
+                padding='SAME', W_init=w_init, name='d/h1/conv2d') # 这里还需要注意一点,我们使用stride=(2,2),
+        # 而不是(1,1)这样我们经过一个conv层之后图像的大小就会减小一半,而且这里并没有使用maxpooling层,减少了参数的个数
         net_h1 = BatchNormLayer(net_h1, act=lambda x: tl.act.lrelu(x, 0.2),
                 is_train=is_train, gamma_init=gamma_init, name='d/h1/batch_norm') # 这里有一个疑惑为什么不在第一层加入BN?
 
@@ -98,5 +107,6 @@ def discriminator_simplified_api(inputs, is_train=True, reuse=False):
         net_h4 = DenseLayer(net_h4, n_units=1, act=tf.identity,
                 W_init = w_init, name='d/h4/lin_sigmoid')  # 最后输出一个值,是什么,应该是各种网络.
         logits = net_h4.outputs
-        net_h4.outputs = tf.nn.sigmoid(net_h4.outputs)  # 最后让网络通过一个sigmoid函数,这是为了之后计算损失函数服务的,因为D网络最后判断真实数据和假的图像
+        net_h4.outputs = tf.nn.sigmoid(net_h4.outputs)
+        # 最后让网络通过一个sigmoid函数,这是为了之后计算损失函数服务的,因为D网络最后判断真实数据和假的图像
     return net_h4, logits

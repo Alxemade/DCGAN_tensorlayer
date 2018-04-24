@@ -61,7 +61,8 @@ imread
 args:
     path: the image path you want to read 
     is_grayscale, if True prove is a RGB image and we need to set flatten as True, else is False prove is a gray mode 
-    Attention: the scipy.misc.imread return the narray so need to convert it to the float, because we need put it as a input image, so the type of the image must be a float instead of a ndarray 
+    Attention: the scipy.misc.imread return the narray so need to convert it to the float, because we need put it as a
+     input image, so the type of the image must be a float instead of a ndarray 
 """
 def imread(path, is_grayscale = False):
     if (is_grayscale):
