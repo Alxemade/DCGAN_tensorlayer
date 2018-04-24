@@ -5,9 +5,12 @@ Downloads the following:
 - Celeb-A dataset
 - LSUN dataset
 - MNIST dataset
-注意: 一开始我们使用python download.py celebA去下载celebA,但是一直下载不是很成功,出现requests.exceptions.ChunkedEncodingError: ('Connection broken: IncompleteRead(9412 bytes read, 23356 more expected)等问题
-针对这个问题,我们尝试各种方法,比如使用http1.0协议之类的尝试,但是最后都没有成功,我们是在http://bamos.github.io/2016/08/09/deep-completion/博客中看到了celebAD的下载地址:
-https://drive.google.com/open?id=0B7EVK8r0v71pWEZsZE9oNnFzTm8 进行下载,但是下载速度真的十分慢,所以这也就解释了,我们直接运行程序下载可能中间过程容易断掉,使用浏览器可靠链接?
+注意: 一开始我们使用python download.py celebA去下载celebA,但是一直下载不是很成功,出现requests.exceptions.ChunkedEncodingError:
+('Connection broken: IncompleteRead(9412 bytes read, 23356 more expected)等问题
+针对这个问题,我们尝试各种方法,比如使用http1.0协议之类的尝试,但是最后都没有成功,
+我们是在http://bamos.github.io/2016/08/09/deep-completion/博客中看到了celebAD的下载地址:
+https://drive.google.com/open?id=0B7EVK8r0v71pWEZsZE9oNnFzTm8 进行下载,但是下载速度真的十分慢,所以这也就解释了,
+我们直接运行程序下载可能中间过程容易断掉,使用浏览器可靠链接?
 """
 from __future__ import print_function
 import os, sys, gzip, json, shutil, zipfile, argparse, subprocess, requests
