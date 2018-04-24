@@ -15,6 +15,16 @@ TensorLayer implementation of DCGAN to generate face image.
 下面是定义的全局参数,我们是可以在另一个python文件进行引用,命令行参数
 Usage : see README.md
 Attention: 注意一点这里的flages是全局变量,可以在同级之间进行调用,其中我们在model已经使用部分flags定义的参数
+另外还需要注意一点: 在2014 lan Goodfellow的GAN论文中提出的minmax问题可以使用ADMM思想进行梯度下降法:
+对于D来说, 我们使用梯度上升法,也就是MAX[ logD(Xi) + log(1 - D(G(Zi)))],G来说:我们使用梯度下降法MIN[log(1 - D(G(Zi)))]
+1. 首先是对于D的第一项,我们MAX{logD(Xi)}, d_loss_real = tl.cost.sigmoid_cross_entropy(d2_logits, tf.ones_like(d2_logits)) 
+我们使用sigmoid_cross_entropy计算损失,在[0,1]我们使用tf.ones_like比较如果越接近1表示误差越小,反之误差越大,d2_logits输出什么?
+2 . 针对D的第二项, MAX[ log(1 - D(G(Zi)))] 等价于 MIN[ log (D(G(Zi)))] 所以和0比较越接近0loss越小,
+d_loss_fake = tl.cost.sigmoid_cross_entropy(d_logits, tf.zeros_like(d_logits), name='dfake') 
+3 . 针对G来说,MIN[log(1 - D(G(Zi)))], 可能一开始来说我们使用数值很小,所以我们就使用MAX[D(G(Zi))]代替,也就是和1相比,越接近越好
+tl.cost.sigmoid_cross_entropy(d_logits, tf.ones_like(d_logits), name='gfake')
+
+综上所述,我们是根据和1还是0相比做出正确损失函数
 """
 flags = tf.app.flags  # 先定义一个flgs, 使用flags.DEFINE_??可以定义一个命令行参数,第一个参数是参数名字,第二个参数是默认值
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")  # 这是整个实验迭代的次数
